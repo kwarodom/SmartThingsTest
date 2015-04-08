@@ -13,7 +13,6 @@
  *  for the specific language governing permissions and limitations under the License.
  *
  */
- 
 metadata {
 	definition (name: "NYCE Open/Closed Sensor", namespace: "smartthings", author: "SmartThings") {
     	capability "Battery"
