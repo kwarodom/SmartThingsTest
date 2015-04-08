@@ -23,8 +23,9 @@ metadata {
         
         command "enrollResponse"
 
-		fingerprint inClusters: "0000,0001,0003,0406,0500,0020", manufacturer: "NYCE", model: "3041", application: "08"
-        fingerprint inClusters: "0000,0001,0003,0406,0500,0020", manufacturer: "NYCE", model: "3043", application: "08"
+		fingerprint inClusters: "0000,0001,0003,0406,0500,0020", manufacturer: "NYCE", model: "3041"
+        fingerprint inClusters: "0000,0001,0003,0406,0500,0020", manufacturer: "NYCE", model: "3043"
+        fingerprint inClusters: "0000,0001,0003,0406,0500,0020", manufacturer: "NYCE", model: "3045"
 	}
 
 	tiles {
@@ -106,6 +107,8 @@ private int getBatteryPercentage(int value) {
     def maxVolts = 3.0
     def volts = value / 10
     def pct = (volts - minVolts) / (maxVolts - minVolts)
+    if(pct>1)
+        pct=1		//if battery is overrated, decreasing battery value to 100%
     return (int) pct * 100
 }
 
@@ -212,7 +215,7 @@ def configure() {
         "raw 0x500 {01 23 00 00 00}", "delay 200",
         "send 0x${device.deviceNetworkId} 1 1", "delay 1500",
 	]
-    return configCmds + refresh() // send refresh cmds as part of config
+    return configCmds + refresh() + enrollResponse() // send refresh cmds as part of config
 }
 
 def enrollResponse() {

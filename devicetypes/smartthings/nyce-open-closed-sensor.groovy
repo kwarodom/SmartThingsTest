@@ -24,8 +24,8 @@ metadata {
         command "enrollResponse"
  
  
-		fingerprint inClusters: "0000,0001,0003,0406,0500,0020", manufacturer: "NYCE", model: "3011", application: "08"
-        fingerprint inClusters: "0000,0001,0003,0406,0500,0020", manufacturer: "NYCE", model: "3014", application: "08"
+		fingerprint inClusters: "0000,0001,0003,0406,0500,0020", manufacturer: "NYCE", model: "3011"
+        fingerprint inClusters: "0000,0001,0003,0406,0500,0020", manufacturer: "NYCE", model: "3014"
 	}
  
 	simulator {
@@ -204,7 +204,7 @@ def configure() {
        	//Set binding for battery voltage level
 		"zdo bind 0x${device.deviceNetworkId} 1 1 1 {${device.zigbeeId}} {}"
 	]
-    return configCmds + refresh() // send refresh cmds as part of config
+    return configCmds + refresh() + enrollResponse() // send refresh cmds as part of config
 }
 
 def enrollResponse() {
