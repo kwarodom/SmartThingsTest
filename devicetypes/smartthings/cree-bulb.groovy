@@ -134,7 +134,7 @@ def setLevel(value) {
 	}
 
 	sendEvent(name: "level", value: value)
-	def level = new BigInteger(Math.round(value * 255 / 100).toString()).toString(16)
+    def level = hex(value)
 	cmds << "st cmd 0x${device.deviceNetworkId} ${endpointId} 8 4 {${level} 0000}"
 
 	//log.debug cmds

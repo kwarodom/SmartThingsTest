@@ -33,7 +33,7 @@ metadata {
 	// UI tile definitions
 	tiles {
 		standardTile("switch", "device.switch", width: 2, height: 2, canChangeIcon: true) {
-			state "off", label: 'closed', action: "switch.on", icon: "st.Outdoor.outdoor16", backgroundColor: "#ffffff"
+			state "off", label: 'closed', action: "switch.on", icon: "st.Outdoor.outdoor16", backgroundColor: "#e86d13"
 			state "on", label: 'open', action: "switch.off", icon: "st.Outdoor.outdoor16", backgroundColor: "#53a7c0"
 		}
 		main "switch"

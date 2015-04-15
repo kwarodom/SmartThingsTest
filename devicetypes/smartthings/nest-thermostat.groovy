@@ -48,9 +48,11 @@ metadata {
         }
         standardTile("lowarrowup", "device.lowarrowup", inactiveLabel: false, decoration: "flat") {
             state "default", label:'', action:"heatup", backgroundColor:"#ffffff", icon:"st.thermostat.thermostat-up"
+            state "disable", label:'', icon: "st.thermostat.thermostat-up-inactive"
         }
         standardTile("higharrowup", "device.higharrowup", inactiveLabel: false, decoration: "flat") {
             state "default", label:'', action:"coolup", backgroundColor:"#ffffff", icon:"st.thermostat.thermostat-up"
+            state "disable", label:'', icon: "st.thermostat.thermostat-up-inactive"
         }        
 		standardTile("thermostatMode", "device.thermostatMode", inactiveLabel: false, decoration: "flat") {
             state("waiting", label:'${name}', icon: "st.unknown.unknown.unknown")
@@ -60,7 +62,6 @@ metadata {
             state("heat", action:"mode", icon: "st.thermostat.heat")
             state("offline", label:'${name}', icon: "st.illuminance.illuminance.dark")
             state("away", label:'${name}', icon: "st.nest.nest-away")
-            state("emergency", icon: "st.thermostat.emergency-heat")
             state("auto-away", label:'${name}', icon: "st.nest.nest-away")
 			state("rushhour", label:'rush hour', icon: "st.Home.home1")            
         }
@@ -75,13 +76,15 @@ metadata {
         }
         standardTile("lowarrowdown", "device.lowarrowdown", inactiveLabel: false, decoration: "flat") {
             state "default", label:'', action:"heatdown", backgroundColor:"#ffffff", icon:"st.thermostat.thermostat-down"
+            state "disable", label:'', icon: "st.thermostat.thermostat-down-inactive"            
         }
         standardTile("higharrowdown", "device.higharrowdown", inactiveLabel: false, decoration: "flat") {
             state "default", label:'', action:"cooldown", backgroundColor:"#ffffff", icon:"st.thermostat.thermostat-down"
+            state "disable", label:'', icon: "st.thermostat.thermostat-down-inactive"
         } 
 		standardTile("leafinfo", "device.leafinfo", inactiveLabel: false, decoration: "flat") {
             state "yes", label:'', icon: "st.nest.nest-leaf"
-            state "no", label:'', icon: "st.illuminance.illuminance.dark"
+            state "no", label:'no leaf', icon: "st.nest.empty"
         }
         standardTile("presence", "device.presence", inactiveLabel: false, decoration: "flat") {
             state "home", label:'${name}', action:"away", icon: "st.nest.nest-home"
@@ -135,7 +138,8 @@ def heatup() {
             targetvalue = targetvalue + 1 
         else  
             targetvalue = targetvalue + 0.5 
-        setHeatingSetpoint(targetvalue) 
+        sendEvent(name:"heatingSetpoint", value: targetvalue)    
+        runIn(3, "setHeatingSetpoint", [cassandra: true, data: [value:targetvalue],overwrite: true])
     } else {
     	def latestThermostatMode = device.latestState('thermostatMode').stringValue 
         parent.sendNotification("This action is not available in mode $latestThermostatMode")
@@ -152,7 +156,8 @@ def heatdown() {
             targetvalue = targetvalue - 1 
         else  
             targetvalue = targetvalue - 0.5 
-        setHeatingSetpoint(targetvalue) 
+        sendEvent(name:"heatingSetpoint", value: targetvalue)    
+        runIn(3, "setHeatingSetpoint", [cassandra: true, data: [value:targetvalue],overwrite: true])
     } else {
     	def latestThermostatMode = device.latestState('thermostatMode').stringValue 
         parent.sendNotification("This action is not available in mode $latestThermostatMode")
@@ -169,7 +174,8 @@ def coolup() {
             targetvalue = targetvalue + 1 
         else
             targetvalue = targetvalue + 0.5  
-        setCoolingSetpoint(targetvalue)  
+        sendEvent(name:"coolingSetpoint", value: targetvalue) 
+        runIn(3, "setCoolingSetpoint", [cassandra: true, data: [value:targetvalue],overwrite: true])
     } else {
     	def latestThermostatMode = device.latestState('thermostatMode').stringValue 
         parent.sendNotification("This action is not available in mode $latestThermostatMode")
@@ -185,8 +191,9 @@ def cooldown() {
         if (scale == "f")
             targetvalue = targetvalue - 1 
         else
-            targetvalue = targetvalue - 0.5  
-        setCoolingSetpoint(targetvalue)  
+            targetvalue = targetvalue - 0.5 
+        sendEvent(name:"coolingSetpoint", value: targetvalue)     
+        runIn(3, "setCoolingSetpoint", [cassandra: true, data: [value:targetvalue],overwrite: true])
     } else {
     	def latestThermostatMode = device.latestState('thermostatMode').stringValue 
         parent.sendNotification("This action is not available in mode $latestThermostatMode")
@@ -210,11 +217,10 @@ def mode() {
 }
 
 void setHeatingSetpoint(temp) {
-    parent.poll()
-    log.trace "setHeatingSetpoint to $temp"
+    log.trace "setHeatingSetpoint to $temp.value"
     def min
     def max    
-    def targetvalue = temp 
+    def targetvalue = temp.value as BigDecimal
     def scale= getTemperatureScale().toLowerCase()   
     if (scale == "f") {
         min = 50
@@ -227,10 +233,10 @@ void setHeatingSetpoint(temp) {
         def latestThermostatMode = device.latestState('thermostatMode').stringValue     
         switch (latestThermostatMode) {
             case "heat-cool":
-                parent.temp(device.deviceNetworkId, "target_temperature_low_${scale}", targetvalue)
+                log.trace parent.temp(device.deviceNetworkId, "target_temperature_low_${scale}", targetvalue)
                 break;
             case "heat":
-                parent.temp(device.deviceNetworkId, "target_temperature_${scale}", targetvalue)
+                log.trace parent.temp(device.deviceNetworkId, "target_temperature_${scale}", targetvalue) 
                 break;        
         }  
 	} else {
@@ -239,11 +245,10 @@ void setHeatingSetpoint(temp) {
 }
 
 void setCoolingSetpoint(temp) {
-    parent.poll()
-    log.trace "setCoolingSetpoint to $temp"
+    log.trace "setCoolingSetpoint to $temp.value"
     def min
     def max    
-    def targetvalue = temp 
+    def targetvalue = temp.value as BigDecimal
     def scale= getTemperatureScale().toLowerCase()   
     if (scale == "f") {
         min = 50
@@ -256,10 +261,10 @@ void setCoolingSetpoint(temp) {
         def latestThermostatMode = device.latestState('thermostatMode').stringValue     
         switch (latestThermostatMode) {
             case "heat-cool":
-                parent.temp(device.deviceNetworkId, "target_temperature_high_${scale}", targetvalue)
+                log.trace parent.temp(device.deviceNetworkId, "target_temperature_high_${scale}", targetvalue)
                 break;
             case "cool":
-                parent.temp(device.deviceNetworkId, "target_temperature_${scale}", targetvalue)
+                log.trace parent.temp(device.deviceNetworkId, "target_temperature_${scale}", targetvalue)
                 break;        
         }  
 	} else {
